@@ -1,5 +1,6 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
+const fs = require("fs");
 
 async function displayMainMenu() {
     return await inquirer.prompt([
@@ -13,12 +14,17 @@ async function displayMainMenu() {
 }
 
 async function init() {
-    while (true) {
+    let keepExecuting = true;
+    while (keepExecuting) {
         let option = await displayMainMenu();
         console.log(option);
 
-        if (option.menuOption === 'Exit')
-            break;
+        switch (option.menuOption) {
+            case 'Exit':
+                keepExecuting = false;
+                break;
+        }
+
     }
 }
 
