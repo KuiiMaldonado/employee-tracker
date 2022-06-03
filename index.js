@@ -1,6 +1,7 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2/promise');
 const bluebird = require('bluebird');
+const cTable = require('console.table');
 require('dotenv').config();
 
 async function displayMainMenu() {
@@ -57,6 +58,8 @@ async function init() {
         }
 
     }
+
+    connection.end();
 }
 
 init().then(() => console.log('Thanks for using the application'));
