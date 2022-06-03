@@ -20,7 +20,7 @@ async function viewAllDepartments(connection) {
 }
 
 async function viewAllRoles(connection) {
-    return [rows, fields] = await connection.execute('SELECT * FROM roles');
+    return [rows, fields] = await connection.execute('SELECT role_id, title, d.name as department, salary FROM roles r join departments d on r.department_id = d.department_id');
 }
 
 function displayResults(title, rows) {
