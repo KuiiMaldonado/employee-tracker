@@ -19,6 +19,14 @@ async function viewAllDepartments(connection) {
     return [rows, fields] = await connection.execute('SELECT * FROM departments');
 }
 
+async function viewAllRoles(connection) {
+    return [rows, fields] = await connection.execute('SELECT * FROM roles');
+}
+
+function displayResults(title, rows) {
+    console.table(title, rows);
+}
+
 async function init() {
     const connection = await mysql.createConnection(
         {
@@ -34,13 +42,16 @@ async function init() {
 
     while (keepExecuting) {
         let option = await displayMainMenu();
+        let rows;
 
         switch (option.menuOption) {
             case 'View all departments':
-                const [rows] = await viewAllDepartments(connection);
-                console.table('Departments', rows);
+                [rows] = await viewAllDepartments(connection);
+                displayResults('Departments', rows);
                 break;
             case 'View all roles':
+                [rows] = await viewAllRoles(connection);
+                displayResults('Roles', rows);
                 break;
             case 'View all employees':
                 break;
