@@ -1,17 +1,8 @@
 const inquirer = require('inquirer');
-const mysql = require('mysql2');
-const fs = require("fs");
-require('dotenv').config()
-
-const db = mysql.createConnection(
-    {
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    },
-    console.log(`Connected to ${process.env.DB_NAME} database`)
-);
+const mysql = require('mysql2/promise');
+const bluebird = require('bluebird');
+const cTable = require('console.table');
+require('dotenv').config();
 
 async function displayMainMenu() {
     return await inquirer.prompt([
@@ -24,15 +15,30 @@ async function displayMainMenu() {
     ]);
 }
 
+async function viewAllDepartments(connection) {
+    return [rows, fields] = await connection.execute('SELECT * FROM departments');
+}
+
 async function init() {
+    const connection = await mysql.createConnection(
+        {
+            host: process.env.DB_HOST,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME,
+            Promise: bluebird
+        },
+        console.log(`Connected to ${process.env.DB_NAME} database`)
+    );
     let keepExecuting = true;
 
     while (keepExecuting) {
         let option = await displayMainMenu();
-        console.log(option);
 
         switch (option.menuOption) {
             case 'View all departments':
+                const [rows] = await viewAllDepartments(connection);
+                console.table('Departments', rows);
                 break;
             case 'View all roles':
                 break;
@@ -52,6 +58,8 @@ async function init() {
         }
 
     }
+
+    connection.end();
 }
 
 init().then(() => console.log('Thanks for using the application'));
