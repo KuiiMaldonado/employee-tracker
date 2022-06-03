@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/KuiiMaldonado/employee-tracker#readme",
   "dependencies": {
+    "bluebird": "^3.7.2",
     "console.table": "^0.10.0",
     "dotenv": "^16.0.1",
     "inquirer": "^8.2.4",
