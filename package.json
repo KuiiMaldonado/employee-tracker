@@ -1,0 +1,24 @@
+{
+  "name": "employee-tracker",
+  "version": "1.0.0",
+  "description": "A command-line application to manage a company's employee database.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KuiiMaldonado/employee-tracker.git"
+  },
+  "author": "Cuitlahuac Maldonado",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KuiiMaldonado/employee-tracker/issues"
+  },
+  "homepage": "https://github.com/KuiiMaldonado/employee-tracker#readme",
+  "dependencies": {
+    "inquirer": "^8.2.4",
+    "mysql2": "^2.3.3"
+  }
+}
