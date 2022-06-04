@@ -16,11 +16,15 @@ async function displayMainMenu() {
 }
 
 async function viewAllDepartments(connection) {
-    return [rows, fields] = await connection.execute('SELECT * FROM departments');
+    return [rows, fields] = await connection.execute('SELECT * FROM departments;');
 }
 
 async function viewAllRoles(connection) {
-    return [rows, fields] = await connection.execute('SELECT role_id, title, d.name as department, salary FROM roles r join departments d on r.department_id = d.department_id');
+    return [rows, fields] = await connection.execute('SELECT role_id, title, d.name as department, salary FROM roles r join departments d on r.department_id = d.department_id;');
+}
+
+async function viewAllEmployees(connection) {
+    return [rows, fields] = await connection.execute('SELECT employee_id, first_name, last_name, r.title, d.name as department, salary, (SELECT CONCAT(first_name, \' \', last_name) FROM employees WHERE employees.employee_id = e.manager_id) AS manager FROM employees e JOIN roles r ON e.role_id = r.role_id JOIN departments d ON r.department_id = d.department_id;')
 }
 
 function displayResults(title, rows) {
@@ -54,6 +58,8 @@ async function init() {
                 displayResults('Roles', rows);
                 break;
             case 'View all employees':
+                [rows] = await viewAllEmployees(connection);
+                displayResults('Employees', rows);
                 break;
             case 'Add a department':
                 break;
