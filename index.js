@@ -25,7 +25,7 @@ async function addNewDepartment() {
     ]);
 }
 
-async function addNewRole(){
+async function addNewRole(departments){
     return await inquirer.prompt([
         {
             type: 'input',
@@ -38,9 +38,10 @@ async function addNewRole(){
             name: 'salary',
         },
         {
-            type: 'input',
-            message: 'Enter new role department id: ',
-            name: 'department_id',
+            type: 'list',
+            message: 'Which department does the role belong to: ',
+            name: 'department',
+            choices: departments
         },
     ]);
 }
@@ -94,7 +95,8 @@ async function insertDepartment(connection, department) {
 }
 
 async function insertRole(connection, role) {
-    await connection.execute('INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?);', [role.title, role.salary, role.department_id]);
+    const [rows] = await connection.execute('SELECT department_id FROM departments WHERE name = ?;', [role.department]);
+    await connection.execute('INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?);', [role.title, role.salary, rows[0].department_id]);
 }
 
 async function insertEmployee(connection, employee) {
@@ -159,9 +161,14 @@ async function init() {
             case 'Add a department':
                 const newDepartment = await addNewDepartment();
                 await insertDepartment(connection, newDepartment.name);
+                console.log('Added department tp the database');
                 break;
             case 'Add a role':
-                const newRole = await addNewRole();
+                [rows] = await viewAllDepartments(connection);
+                const departments = rows.map(department => {
+                   return department.name;
+                });
+                const newRole = await addNewRole(departments);
                 await insertRole(connection, newRole);
                 break;
             case 'Add an employee':
