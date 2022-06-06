@@ -25,7 +25,7 @@ async function addNewDepartment() {
     ]);
 }
 
-async function addNewRole(){
+async function addNewRole(departments){
     return await inquirer.prompt([
         {
             type: 'input',
@@ -38,34 +38,37 @@ async function addNewRole(){
             name: 'salary',
         },
         {
-            type: 'input',
-            message: 'Enter new role department id: ',
-            name: 'department_id',
+            type: 'list',
+            message: 'Which department does the role belong to: ',
+            name: 'department',
+            choices: departments
         },
     ]);
 }
 
-async function addEmployee(){
+async function addEmployee(roles, employees){
     return await inquirer.prompt([
         {
             type: 'input',
-            message: 'Enter new employee first name: ',
+            message: 'Enter new employee\'s first name: ',
             name: 'first_name',
         },
         {
             type: 'input',
-            message: 'Enter new employee last name: ',
+            message: 'Enter new employee\'s last name: ',
             name: 'last_name',
         },
         {
-            type: 'input',
-            message: 'Enter new employee role ID: ',
-            name: 'role_id',
+            type: 'list',
+            message: 'What is the new employee\'s role? ',
+            name: 'role',
+            choices: roles,
         },
         {
-            type: 'input',
-            message: 'Enter new employee manager ID (if applicable): ',
-            name: 'manager_id',
+            type: 'list',
+            message: 'Who is the employee\'s manager: ',
+            name: 'manager',
+            choices: employees,
         },
     ]);
 }
@@ -94,13 +97,21 @@ async function insertDepartment(connection, department) {
 }
 
 async function insertRole(connection, role) {
-    await connection.execute('INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?);', [role.title, role.salary, role.department_id]);
+    const [rows] = await connection.execute('SELECT department_id FROM departments WHERE name = ?;', [role.department]);
+    await connection.execute('INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?);', [role.title, role.salary, rows[0].department_id]);
 }
 
 async function insertEmployee(connection, employee) {
-    if (employee.manager_id === '')
-        employee.manager_id = null;
-    await connection.execute('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);', [employee.first_name, employee.last_name, employee.role_id, employee.manager_id]);
+    let manager_id;
+    let [roles] = await connection.execute('SELECT role_id FROM roles WHERE title = ?', [employee.role]);
+    const [first_name, last_name] = employee.manager.split(' ');
+    if (employee.manager === 'None')
+        manager_id = null;
+    else {
+        let[employees] = await connection.execute('SELECT employee_id FROM employees WHERE first_name = ? and last_name = ?;', [first_name, last_name]);
+        manager_id = employees[0].employee_id;
+    }
+    await connection.execute('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);', [employee.first_name, employee.last_name, roles[0].role_id, manager_id]);
 }
 
 async function updateEmployeeRoleQuery(connection, employee, role) {
@@ -126,6 +137,22 @@ function displayResults(title, rows) {
     console.table(title, rows);
 }
 
+function mapRoles(rows) {
+    let roles = rows.map(role => {
+        return role.title;
+    });
+
+    return roles;
+}
+
+function mapEmployees(rows){
+    let employees = rows.map(employee => {
+        return employee.first_name.concat(' ', employee.last_name);
+    });
+
+    return employees;
+}
+
 async function init() {
     const connection = await mysql.createConnection(
         {
@@ -142,6 +169,8 @@ async function init() {
     while (keepExecuting) {
         let option = await displayMainMenu();
         let rows;
+        let roles;
+        let employees;
 
         switch (option.menuOption) {
             case 'View all departments':
@@ -159,25 +188,31 @@ async function init() {
             case 'Add a department':
                 const newDepartment = await addNewDepartment();
                 await insertDepartment(connection, newDepartment.name);
+                console.log('Added department tp the database');
                 break;
             case 'Add a role':
-                const newRole = await addNewRole();
+                [rows] = await viewAllDepartments(connection);
+                const departments = rows.map(department => {
+                   return department.name;
+                });
+                const newRole = await addNewRole(departments);
                 await insertRole(connection, newRole);
                 break;
             case 'Add an employee':
-                const newEmployee = await addEmployee();
+                [rows] = await viewAllRoles(connection);
+                roles = mapRoles(rows);
+                [rows] = await viewAllEmployees(connection);
+                employees = mapEmployees(rows);
+                employees.push('None');
+                const newEmployee = await addEmployee(roles, employees);
                 await insertEmployee(connection, newEmployee);
                 break;
             case 'Update employee role':
                 [rows] = await viewAllEmployees(connection);
-                const employees = rows.map(employee => {
-                   return employee.first_name.concat(' ', employee.last_name);
-                });
+                employees = mapEmployees(rows);
                 const updateEmployee = await updateEmployeeRole(employees, false);
                 [rows] = await viewAllRoles(connection);
-                const roles = rows.map(role => {
-                   return role.title;
-                });
+                roles = mapRoles(rows);
                 const updateRole = await updateEmployeeRole(roles, true);
                 await updateEmployeeRoleQuery(connection, updateEmployee.employee, updateRole.role);
                 break;
