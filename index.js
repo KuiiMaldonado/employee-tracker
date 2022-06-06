@@ -45,12 +45,43 @@ async function addNewRole(){
     ]);
 }
 
+async function addEmployee(){
+    return await inquirer.prompt([
+        {
+            type: 'input',
+            message: 'Enter new employee first name: ',
+            name: 'first_name',
+        },
+        {
+            type: 'input',
+            message: 'Enter new employee last name: ',
+            name: 'last_name',
+        },
+        {
+            type: 'input',
+            message: 'Enter new employee role ID: ',
+            name: 'role_id',
+        },
+        {
+            type: 'input',
+            message: 'Enter new employee manager ID (if applicable): ',
+            name: 'manager_id',
+        },
+    ]);
+}
+
 async function insertDepartment(connection, department) {
     await connection.execute('INSERT INTO departments (name) VALUES (?);', [department]);
 }
 
 async function insertRole(connection, role) {
     await connection.execute('INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?);', [role.title, role.salary, role.department_id]);
+}
+
+async function insertEmployee(connection, employee) {
+    if (employee.manager_id === '')
+        employee.manager_id = null;
+    await connection.execute('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);', [employee.first_name, employee.last_name, employee.role_id, employee.manager_id]);
 }
 
 async function viewAllDepartments(connection) {
@@ -108,6 +139,8 @@ async function init() {
                 await insertRole(connection, newRole);
                 break;
             case 'Add an employee':
+                const newEmployee = await addEmployee();
+                await insertEmployee(connection, newEmployee);
                 break;
             case 'Update employee role':
                 break;
