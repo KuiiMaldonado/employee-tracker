@@ -15,6 +15,20 @@ async function displayMainMenu() {
     ]);
 }
 
+async function addNewDepartment() {
+    return await inquirer.prompt([
+        {
+            type: 'input',
+            message: 'Enter new department name',
+            name: 'name',
+        },
+    ]);
+}
+
+async function insertDepartment(connection, newDepartment) {
+    await connection.execute('INSERT INTO departments (name) VALUES (?)', [newDepartment]);
+}
+
 async function viewAllDepartments(connection) {
     return [rows, fields] = await connection.execute('SELECT * FROM departments;');
 }
@@ -62,6 +76,8 @@ async function init() {
                 displayResults('Employees', rows);
                 break;
             case 'Add a department':
+                const newDepartment = await addNewDepartment();
+                await insertDepartment(connection, newDepartment.name);
                 break;
             case 'Add a role':
                 break;
