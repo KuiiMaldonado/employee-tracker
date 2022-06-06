@@ -70,6 +70,25 @@ async function addEmployee(){
     ]);
 }
 
+async function updateEmployeeRole(options, showRoles) {
+    return await inquirer.prompt([
+        {
+            type: 'list',
+            message: 'Which employee\'s role do you want to update?',
+            name: 'employee',
+            choices: options,
+            when: !showRoles,
+        },
+        {
+            type: 'list',
+            message: 'Which role do you want to assign to the selected employee?',
+            name: 'role',
+            choices: options,
+            when: showRoles,
+        },
+    ]);
+}
+
 async function insertDepartment(connection, department) {
     await connection.execute('INSERT INTO departments (name) VALUES (?);', [department]);
 }
@@ -82,6 +101,13 @@ async function insertEmployee(connection, employee) {
     if (employee.manager_id === '')
         employee.manager_id = null;
     await connection.execute('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);', [employee.first_name, employee.last_name, employee.role_id, employee.manager_id]);
+}
+
+async function updateEmployeeRoleQuery(connection, employee, role) {
+    const [first_name, last_name] = employee.split(' ');
+    let [employees] = await connection.execute('SELECT employee_id FROM employees WHERE first_name = ? and last_name = ?;', [first_name, last_name]);
+    let [roles] = await connection.execute('SELECT role_id FROM roles WHERE title = ?', [role]);
+    await connection.execute('UPDATE employees SET role_id = ? WHERE employee_id = ?;', [roles[0].role_id, employees[0].employee_id]);
 }
 
 async function viewAllDepartments(connection) {
@@ -143,6 +169,17 @@ async function init() {
                 await insertEmployee(connection, newEmployee);
                 break;
             case 'Update employee role':
+                [rows] = await viewAllEmployees(connection);
+                const employees = rows.map(employee => {
+                   return employee.first_name.concat(' ', employee.last_name);
+                });
+                const updateEmployee = await updateEmployeeRole(employees, false);
+                [rows] = await viewAllRoles(connection);
+                const roles = rows.map(role => {
+                   return role.title;
+                });
+                const updateRole = await updateEmployeeRole(roles, true);
+                await updateEmployeeRoleQuery(connection, updateEmployee.employee, updateRole.role);
                 break;
             case 'Exit':
                 keepExecuting = false;
