@@ -8,7 +8,7 @@ async function displayMainMenu() {
     return await inquirer.prompt([
         {
             type: 'list',
-            message: 'Please choose an option',
+            message: 'Please choose an option: ',
             name: 'menuOption',
             choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update employee role', 'Exit'],
         },
@@ -19,14 +19,38 @@ async function addNewDepartment() {
     return await inquirer.prompt([
         {
             type: 'input',
-            message: 'Enter new department name',
+            message: 'Enter new department name: ',
             name: 'name',
         },
     ]);
 }
 
-async function insertDepartment(connection, newDepartment) {
-    await connection.execute('INSERT INTO departments (name) VALUES (?)', [newDepartment]);
+async function addNewRole(){
+    return await inquirer.prompt([
+        {
+            type: 'input',
+            message: 'Enter new role title: ',
+            name: 'title',
+        },
+        {
+            type: 'input',
+            message: 'Enter new role salary: ',
+            name: 'salary',
+        },
+        {
+            type: 'input',
+            message: 'Enter new role department id: ',
+            name: 'department_id',
+        },
+    ]);
+}
+
+async function insertDepartment(connection, department) {
+    await connection.execute('INSERT INTO departments (name) VALUES (?);', [department]);
+}
+
+async function insertRole(connection, role) {
+    await connection.execute('INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?);', [role.title, role.salary, role.department_id]);
 }
 
 async function viewAllDepartments(connection) {
@@ -80,6 +104,8 @@ async function init() {
                 await insertDepartment(connection, newDepartment.name);
                 break;
             case 'Add a role':
+                const newRole = await addNewRole();
+                await insertRole(connection, newRole);
                 break;
             case 'Add an employee':
                 break;
